@@ -18,3 +18,8 @@ Custom RandLA-Net
 segmenter = randlanet(weights, classNames) creates a network, and configures it to perform segmentation using the specified set of classes
 ```
 
+(https://github.com/QingyongHu/RandLA-Net)
+
+(https://www.open3d.org/docs/latest/python_api/open3d.ml.torch.models.RandLANet.html)
+
+(https://developers.arcgis.com/python/latest/guide/point-cloud-classification-using-randlanet/)
