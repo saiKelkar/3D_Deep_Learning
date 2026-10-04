@@ -221,3 +221,93 @@ plt.savefig("../DATA/34FN2_18_orthoimage.jpg")
 TO-DO
 
 ##### 3D Data Structures: k-d Trees, Octrees, BVH
+- Think of these three data structures as different ways to organize a messy pile of 3D data so a computer can search through million of points in a fraction of a second instead of freezing up. 
+
+###### k-d Trees (The Closest Neighbor Finder)
+Analogy: Imagine you are standing in a massive city and want to find the five closest coffee shops. Instead of walking down every single street, you use a directory that first splits the city into North and West halves, then split those into smaller quadrants, and so on, until you zoom right into your neighborhood. 
+What it does: It organizes points by splitting space back and forth along the X, Y, and Z axes. It is the ultimate tool for asking: "Which points are closest to this specific spot?"
+
+**Use k-d trees - when you need to query points (nearest neighbors)**
+
+- Three main components: "k", "d", and "tree"
+![[Screenshot_2026-10-04_19-22-45.png]]
+- k means that we can work with 2D data, 3D data, and k-d data while keeping the binary split. 
+- With a k-d tree, we try to get the same number of data points on each branch that a hyperplane defines. 
+- Why a hyperplane? In 2D, it is a line, in 3D it is a plane, and in k-D, it is a hyperplane. 
+- k-d Tree are valuable for their ability to perform rapid nearest-neighbor searches and range queries in multidimensional spaces. 
+- One of the advantages is their logarithmic time complexity for searches in average cases, allowing them to maintain high performance even when dealing with large datasets. 
+- k-d trees partition space using axis-aligned splitting planes at each level. 
+
+```
+# Calculate the k-d tree from point clouds
+pcd_tree = o3d.geometry.KDTreeFlann(point_cloud)
+
+# k-d tree (using scipy)
+points = np.array(point_cloud.points)
+kdtree = cKDTree(points)
+```
+
+###### Octrees (The Space Saver Grid)
+Analogy: Think of a large 3D moving box. You divide it into 8 smaller cube boxes. If one of those small boxes is completely empty, you throw it out and ignore it. If a box has items in it, you divide that box into 8 even smaller cubes. 
+What it does: It breaks 3D space down hierarchically, giving you high detail where there is stuff (like solid walls) and ignoring empty space entirely. It saves a massive amount of computer memory. 
+
+**Use octrees - when you need to organize space hierarchically (voxel grids / density)**
+
+- Subdivision of space in octants, i.e., eight cubes recursively sub-divided into eight children until a specific criterion is achieved. 
+![[Screenshot_2026-10-04_19-32-21.png]]
+- Octrees are well suited for uniform spatial subdivision and situations where the data distribution is roughly uniform in all three dimensions. 
+- Octrees always divide space into eight equal-sized octants. 
+
+```
+curr_max_depth = 8
+
+point_cloud = o3d.io.read_point_cloud("../DATA/structure_verviers.ply")
+
+octree = o3d.geometry.Octree(max_depth = curr_max_depth)
+octree.convert_from_point_cloud(point_cloud)
+o3d.visualization.draw_geometries([octree])
+
+# Check if the target point is within the bounds of the current octant
+octree.locate_leaf_node(point_cloud.points[0])
+```
+###### BVH - Bounding Volume Hierarchy (The Nesting Boxes Shortcut)
+Analogy: Think of buying a large appliance packed inside a big cardboard box. Inside, there are smaller boxes, and inside those are specific parts. If you are looking for a tiny screw, you don't open the big box unless you know you need what's inside. If the big box is in the wrong room, you skip it entirely. 
+What it does: It wraps complex 3D shapes or groups of points inside simple outer shield boxes. When a computer fires a simulated laser beam (like a laser scanner) or checks for a crash, it tests the outer big box first. If the ray misses the big box, it instantly skips checking the thousands of tiny details hidden inside it. 
+
+**Use BVH - when you need to test intersections (rays, collision, meshes)**
+
+###### File Organization
+![[Screenshot_2026-10-04_19-41-20.png]]
+
+- In-memory processing loads the entire dataset into RAM, like having all the books open on a giant table - quick and snappy, but watch out for that table space!
+- Out-of-core reads chunks of data from storage, allowing you to wrangle datasets larger than your memory's capacity. It's like reading chapters of a book, swapping them out as needed - slower, perhaps, but with more scaling potential. 
+
+```
+# In-Memory
+def process_in_memory(dataset):
+	# Load the entire dataset into memory
+	entire_dataset = np.loadtxt(dataset, delimiter=';', skiprows=1)
+	
+	# Now you can perform computations on the entire dataset
+	result = np.mean(entire_dataset, axis=0)
+	return result
+	
+# Out-of-Core
+def process_out_of_core(dataset, chunk_size=1000):
+	# Read dataset in chunks
+	reader = pd.read_csv(dataset, delimiter=';', chunksize=chunk_size)
+	
+	# Initialize an empty array to accmulate results
+	result_accumulator = no.zeros((1, 6))
+	counter = 1
+	
+	for chunk in reader:
+		# Perform computations on each chunk
+		result_chunk = np.mean(chunk.to_numpy(), axis = 0)
+		
+		# Accumulate results
+		result_accumulator += result_chunk
+		counter += 1
+	# return result_accumulator / len(reader)
+	return result_accumulator / counter
+```
