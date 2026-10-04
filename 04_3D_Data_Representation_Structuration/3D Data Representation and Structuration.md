@@ -74,10 +74,48 @@ create_3d_graph()
 - The main distinction between solid and surface model is the method to produce and modify them. 
 - Three main strategies show geometry description through 3D modelling: constructive solid geometry, parametric modelling (including B-reps), and 3D meshes. 
 
-3D meshes:
+**3D meshes:**
 - Mesh is a geometric data structure that enables a collection of polygons to represent surface subdivisions. 
 - Mesh is how computers translate a smooth, mathematical shape into a digital object made of connected triangles that they can actually calculate, store, and display. 
 - Triangle meshing - when all the faces are triangles. (most common in 3D workflows)
 - Quadrilateral meshes - often obtained through mesh optimization techniques to get more compact representations. 
 - Meshes -> based on boundary representation -> dependent upon wireframe model
 - The topology (elemental arrangement) and geometry make up most of the boundary representation of 3D objects (surfaces, curves, and points). Faces, edges, and vertices are the primary topological elements. ![[Screenshot_2026-10-04_09-52-36.png]]
+
+
+| Operations                                                                                                                                                                                                  | Benefits                              | Disadvantages                   |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ------------------------------- |
+| Transformations: All points are transformed with the wireframe model (multiply the points in the point list with linear matrices). In addition, the surface equations or normal vectors can be transformed. | Well-adopted representation           | High memory requirements        |
+| Combinations: Objects can be combined by grouping point lists and edges; operations on polygons (divide based on intersections, remove the redundant polygons, and combine them).                           | Model generation via new-gen scanning | Expensive combinations          |
+| Rendering: Hidden surface or line algorithms can be used because the surfaces of the objects are known so that visibility can be calculated.                                                                | Transformations are quick and easy    | Curved objects are approximated |
+```
+import open3d as o3d
+
+mesh = o3d.io.read_triangle_mesh("../DATA/mesh_terrain.ply")
+mesh.compute_vertex_normals()
+
+o3d.visualization.draw_geometries([mesh])
+```
+
+| File format  | Definition                              | Python library of choice     | Notes                                                                                                                                                               |
+| ------------ | --------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| .stl         | Stereolithography                       | meshio, open3d               | Widely used in 3D printing. Simple, represents surfaces as triangles. Binary version is more compact. ASCII is easier for debugging.                                |
+| .obj         | Wavefront OBJ                           | pywavefront, trimesh, open3d | Common in computer graphics. Supports materials, textures, and vertex normals. Often accompanied by .mtl (material library) files                                   |
+| .ply         | Polygon File Format                     | plyfile, trimesh, open3d     | Versatile format that can also represent point clouds. Handles various data attributes.                                                                             |
+| .glb / .gltf | glTF (GL Transmission Format)           | pygltf, trimesh, open3d      | Modern format optimized for web and real time applications. .glb is a single binary file, while .gltf uses separate JSON and binary files.                          |
+| .fbx         | Autodesk FBX                            | Blender                      | Used in many 3D modeling and animation software packages. Handles complex scenes, animations, and rigging information. Often requires dealing with proprietary SDKs |
+| .off         | Object File Format                      | trimesh, open3d              | A simple format primarily used in academic and research settings. Represents meshes as lists of vertices, faces, and edges.                                         |
+| .dae         | COLLADA (COLLAborative Design Activity) | pycollada, cloudcompare      | Designed for data exchange between different 3D applications. Supports complex scenes and animations.                                                               |
+**Parametric models (e.g. B-reps):**
+- Parametric - Instead of drawing a fixed wall, you define it by parameters - height, length, thickness, and material. If you want a longer wall, you don't redraw it; you just change the length parameters from 3m to 5m, and model updates instantly. 
+- It defines an entire type of object (e.g., a standard interior door that can vary in width) rather than just one frozen 3d mesh instance. 
+- Components talk to each other. If you move a wall, attached windows, doors, and adjacent rooms automatically adjust to stay connected. This is what makes software like Revit or parametric design tools so powerful for real-world construction. 
+- When you capture a building using a 3D scanner (point clouds), you just get a massive, messy cloud of millions of unorganized dots. Turning these into clean, smart parametric models requires extremely intelligent algorithms and parsing. This is one of the biggest bottlenecks in automated Scan-to-BIM research. 
+- While Python is fantastic for handling point clouds and deep learning, writing code from scratch to handle complex parametric B-rep geometry is notoriously difficult. Because of this, developers usually have to rely on external CAD software or specialized geometry kernels rather than pure Python scripts. 
+
+| File format | Definition       | Python library of choice     | Notes                                                                                                   |
+| ----------- | ---------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------- |
+| .step/.stp  | STEP file format | FreeCAD, OCPNet              | ISO standard for exchanging product model data. Excellent for interoperability between CAD systems.     |
+| .iges/.igs  | IGES file format | FreeCAD, pythonOCC           | An older but still widely used standard. Can be complex to parse due to its verbose nature.             |
+| .stl        | STL file format  | open3d, meshio               | Primarily used for 3D printing and rapid prototyping. Represents surfaces as a collection of triangles. |
+| .obj        | Wavefront OBJ    | pywavefront, trimesh, open3d | Common in computer graphics. Can represent both mesh and parametric surfaces.                           |
